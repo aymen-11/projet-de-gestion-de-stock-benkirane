@@ -1,0 +1,23 @@
+# Root gitignore for StockPro
+
+# Frontend ignores
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Backend ignores
+gestion-stock/vendor/
+gestion-stock/.env
+gestion-stock/public/storage
+gestion-stock/storage/*.key
+gestion-stock/bootstrap/cache/*
+gestion-stock/storage/framework/cache/data/*
+gestion-stock/storage/framework/sessions/*
+gestion-stock/storage/framework/testing/*
+gestion-stock/storage/framework/views/*
+
+# OS/System ignores
+.DS_Store
+Thumbs.db
