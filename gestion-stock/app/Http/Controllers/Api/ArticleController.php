@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\Alerte;
+use App\Models\User;
+use App\Notifications\StockAlertNotification;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Http\Request;
 
 class ArticleController extends Controller
@@ -116,24 +119,26 @@ class ArticleController extends Controller
 
     private function checkAndCreateAlerte(Article $article): void
     {
+        $users = User::whereIn('role', ['admin', 'responsable', 'magasinier'])->get();
+
         if ($article->stock_actuel <= 0) {
-            Alerte::create([
-                'article_id' => $article->id,
-                'type'       => 'critique',
-                'message'    => "Rupture de stock : 0 unité (min: {$article->stock_min})",
-            ]);
+            Notification::send($users, new StockAlertNotification(
+                $article->id,
+                'critique',
+                "Rupture de stock : 0 unité (min: {$article->stock_min})"
+            ));
         } elseif ($article->stock_actuel <= $article->stock_min) {
-            Alerte::create([
-                'article_id' => $article->id,
-                'type'       => 'critique',
-                'message'    => "Stock critique : {$article->stock_actuel} unités restantes (min: {$article->stock_min})",
-            ]);
+            Notification::send($users, new StockAlertNotification(
+                $article->id,
+                'critique',
+                "Stock critique : {$article->stock_actuel} unités restantes (min: {$article->stock_min})"
+            ));
         } elseif ($article->stock_actuel <= $article->stock_min * 1.2) {
-            Alerte::create([
-                'article_id' => $article->id,
-                'type'       => 'attention',
-                'message'    => "Stock proche du seuil : {$article->stock_actuel} unités restantes (min: {$article->stock_min})",
-            ]);
+            Notification::send($users, new StockAlertNotification(
+                $article->id,
+                'attention',
+                "Stock proche du seuil : {$article->stock_actuel} unités restantes (min: {$article->stock_min})"
+            ));
         }
     }
 }

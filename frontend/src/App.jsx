@@ -52,7 +52,7 @@ function App() {
           <Route path="commandes/create" element={<RoleRoute roles={['admin', 'responsable']}><CommandeForm /></RoleRoute>} />
           <Route path="commandes/edit/:id" element={<RoleRoute roles={['admin', 'responsable', 'fournisseur']}><CommandeForm isEdit={true} /></RoleRoute>} />
           
-          <Route path="alertes" element={<RoleRoute roles={['admin', 'responsable', 'magasinier']}><AlertesList /></RoleRoute>} />
+          <Route path="alertes" element={<RoleRoute roles={['admin', 'responsable', 'magasinier', 'fournisseur']}><AlertesList /></RoleRoute>} />
           <Route path="rapports" element={<RoleRoute roles={['admin', 'responsable']}><Rapports /></RoleRoute>} />
           <Route path="parametres" element={<RoleRoute roles={['admin', 'responsable', 'magasinier', 'fournisseur']}><Parametres /></RoleRoute>} />
           <Route path="utilisateurs" element={<RoleRoute roles={['admin']}><UtilisateursList /></RoleRoute>} />

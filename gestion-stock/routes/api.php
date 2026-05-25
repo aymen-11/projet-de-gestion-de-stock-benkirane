@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\AlerteController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\RapportController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\TaskController;
 
 // ── Public routes ──────────────────────────────────────────────────
 Route::post('/login', [AuthController::class, 'login']);
@@ -68,8 +69,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/mouvements', [MouvementController::class, 'store']);
     });
 
-    // Alertes
-    Route::middleware('role:admin,responsable,magasinier')->group(function () {
+    // Alertes (Notifications)
+    Route::middleware('role:admin,responsable,magasinier,fournisseur')->group(function () {
         Route::get('/alertes', [AlerteController::class, 'index']);
         Route::get('/alertes/counts', [AlerteController::class, 'counts']);
         Route::put('/alertes/{alerte}/marquer-lue', [AlerteController::class, 'marquerLue']);
@@ -84,5 +85,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // Utilisateurs
     Route::middleware('role:admin')->group(function () {
         Route::apiResource('users', UserController::class);
+    });
+
+    // Tâches Agile (Kanban) - accessible to internal staff
+    Route::middleware('role:admin,responsable,magasinier')->group(function () {
+        Route::get('/tasks', [TaskController::class, 'index']);
+        Route::post('/tasks', [TaskController::class, 'store']);
+        Route::put('/tasks/{task}', [TaskController::class, 'update']);
+        Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
+        Route::patch('/tasks/{task}/move', [TaskController::class, 'moveStatus']);
+        Route::get('/tasks/users', [TaskController::class, 'users']);
     });
 });

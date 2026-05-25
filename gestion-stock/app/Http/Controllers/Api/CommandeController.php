@@ -5,8 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Commande;
 use App\Models\LigneCommande;
+use App\Models\User;
+use App\Models\Fournisseur;
+use App\Notifications\NewCommandeNotification;
+use App\Notifications\FournisseurReplyNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class CommandeController extends Controller
 {
@@ -58,6 +63,21 @@ class CommandeController extends Controller
 
             $commande->update(['total' => $total]);
 
+            // Notify fournisseur if assigned
+            if ($commande->fournisseur_id) {
+                $fournisseur = Fournisseur::find($commande->fournisseur_id);
+                if ($fournisseur && $fournisseur->email) {
+                    $fournisseurUser = User::where('role', 'fournisseur')->where('email', $fournisseur->email)->first();
+                    if ($fournisseurUser) {
+                        Notification::send($fournisseurUser, new NewCommandeNotification(
+                            $commande->id,
+                            $commande->reference ?? 'N/A',
+                            "Une nouvelle commande vous a été assignée."
+                        ));
+                    }
+                }
+            }
+
             return response()->json($commande->load('fournisseur', 'lignes.article'), 201);
         });
     }
@@ -78,6 +98,17 @@ class CommandeController extends Controller
         ]);
 
         $commande->update($data);
+
+        if ($request->user()->role === 'fournisseur' && (isset($data['notes']) || isset($data['statut']))) {
+            $admins = User::whereIn('role', ['admin', 'responsable'])->get();
+            Notification::send($admins, new FournisseurReplyNotification(
+                $commande->id,
+                $commande->reference ?? 'N/A',
+                $request->user()->name,
+                $data['notes'] ?? 'Statut mis à jour : ' . $data['statut']
+            ));
+        }
+
         return response()->json($commande->load('fournisseur', 'lignes.article'));
     }
 

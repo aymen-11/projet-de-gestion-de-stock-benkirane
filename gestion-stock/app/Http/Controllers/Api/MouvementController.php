@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\Alerte;
 use App\Models\Mouvement;
+use App\Models\User;
+use App\Notifications\StockAlertNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class MouvementController extends Controller
 {
@@ -65,33 +68,35 @@ class MouvementController extends Controller
             $article->update(['stock_actuel' => $stockApres]);
 
             // Generate alerts if needed
+            $users = User::whereIn('role', ['admin', 'responsable', 'magasinier'])->get();
+
             if ($stockApres <= 0) {
-                Alerte::create([
-                    'article_id' => $article->id,
-                    'type'       => 'critique',
-                    'message'    => "Rupture de stock : 0 unité (min: {$article->stock_min})",
-                ]);
+                Notification::send($users, new StockAlertNotification(
+                    $article->id,
+                    'critique',
+                    "Rupture de stock : 0 unité (min: {$article->stock_min})"
+                ));
             } elseif ($stockApres <= $article->stock_min) {
-                Alerte::create([
-                    'article_id' => $article->id,
-                    'type'       => 'critique',
-                    'message'    => "Stock critique : {$stockApres} unités restantes (min: {$article->stock_min})",
-                ]);
+                Notification::send($users, new StockAlertNotification(
+                    $article->id,
+                    'critique',
+                    "Stock critique : {$stockApres} unités restantes (min: {$article->stock_min})"
+                ));
             } elseif ($stockApres <= $article->stock_min * 1.2) {
-                Alerte::create([
-                    'article_id' => $article->id,
-                    'type'       => 'attention',
-                    'message'    => "Stock proche du seuil : {$stockApres} unités (min: {$article->stock_min})",
-                ]);
+                Notification::send($users, new StockAlertNotification(
+                    $article->id,
+                    'attention',
+                    "Stock proche du seuil : {$stockApres} unités (min: {$article->stock_min})"
+                ));
             }
 
             // Info alert for entry
             if ($data['type'] === 'entree') {
-                Alerte::create([
-                    'article_id' => $article->id,
-                    'type'       => 'info',
-                    'message'    => "Nouvelle entrée de stock : +{$data['quantite']} unités (nouveau stock: {$stockApres})",
-                ]);
+                Notification::send($users, new StockAlertNotification(
+                    $article->id,
+                    'info',
+                    "Nouvelle entrée de stock : +{$data['quantite']} unités (nouveau stock: {$stockApres})"
+                ));
             }
 
             return response()->json($mouvement->load('article', 'fournisseur', 'user'), 201);

@@ -170,8 +170,6 @@ export default function AppLayout() {
   const secondaryNavItems = allSecondaryNavItems.filter(item => item.roles.includes(userRole));
 
   useEffect(() => {
-    if (userRole === 'fournisseur') return;
-    
     const fetchAlertCount = async () => {
       try {
         const res = await api.get('/alertes/counts');
@@ -181,7 +179,7 @@ export default function AppLayout() {
     fetchAlertCount();
     const interval = setInterval(fetchAlertCount, 30000);
     return () => clearInterval(interval);
-  }, [userRole]);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -297,17 +295,15 @@ export default function AppLayout() {
           </button>
           
           {/* Notifications */}
-          {userRole !== 'fournisseur' && (
-            <NavLink
-              to="/alertes"
-              className="relative w-10 h-10 flex items-center justify-center text-gray-500 hover:text-[#1A766E] hover:bg-white rounded-full transition-colors"
-            >
-              <Bell className="w-5 h-5" />
-              {alertCount > 0 && (
-                <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-[#F3F4F6]"></span>
-              )}
-            </NavLink>
-          )}
+          <NavLink
+            to="/alertes"
+            className="relative w-10 h-10 flex items-center justify-center text-gray-500 hover:text-[#1A766E] hover:bg-white rounded-full transition-colors"
+          >
+            <Bell className="w-5 h-5" />
+            {alertCount > 0 && (
+              <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-[#F3F4F6]"></span>
+            )}
+          </NavLink>
 
           {/* User Profile / Logout */}
           <div className="relative group">

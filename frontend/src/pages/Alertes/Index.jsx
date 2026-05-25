@@ -52,8 +52,8 @@ export default function AlertesList() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Centre d'Alertes</h1>
-          <p className="text-sm text-gray-500 mt-1">Suivez les niveaux de stock critiques et les notifications système.</p>
+          <h1 className="text-2xl font-bold text-gray-900">Centre de Notifications</h1>
+          <p className="text-sm text-gray-500 mt-1">Suivez les niveaux de stock et les mises à jour de commandes.</p>
         </div>
         <button
           onClick={marquerToutesLues}
@@ -93,6 +93,12 @@ export default function AlertesList() {
           alertes.map((alerte) => {
             const cfg = alerteConfig[alerte.type] || alerteConfig.info;
             const Icon = cfg.icon;
+            
+            // Generate related info based on category
+            let metaInfo = [];
+            if (alerte.article) metaInfo.push(alerte.article.code);
+            if (alerte.commande) metaInfo.push(alerte.commande.reference);
+            
             return (
               <div
                 key={alerte.id}
@@ -111,15 +117,20 @@ export default function AlertesList() {
                     </div>
                     <p className="text-sm font-medium text-gray-900">{alerte.message}</p>
                     <div className="flex items-center gap-3 mt-1.5">
-                      <p className="text-xs text-gray-500 font-mono">{alerte.article?.code}</p>
+                      {metaInfo.length > 0 && <p className="text-xs text-gray-500 font-mono">{metaInfo.join(' • ')}</p>}
                       <p className="text-xs text-gray-400">{new Date(alerte.created_at).toLocaleString('fr-FR')}</p>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {alerte.type === 'critique' && (
+                  {alerte.category === 'stock' && alerte.type === 'critique' && (
                     <Link to="/commandes/create" className="px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5">
                       <ShoppingCart className="w-3.5 h-3.5" /> Commander
+                    </Link>
+                  )}
+                  {['commande', 'fournisseur_reply'].includes(alerte.category) && alerte.commande_id && (
+                    <Link to={`/commandes`} className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1.5">
+                      Voir la commande
                     </Link>
                   )}
                   {!alerte.lue && (
