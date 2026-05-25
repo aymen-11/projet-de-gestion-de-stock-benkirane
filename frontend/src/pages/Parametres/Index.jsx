@@ -102,7 +102,7 @@ export default function Parametres() {
       {toast && <Toast message={toast.msg} type={toast.type}/>}
 
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Paramètres</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Mon Profil & Paramètres</h1>
         <p className="text-sm text-gray-500 mt-1">Gérez votre profil et les préférences de l'application.</p>
       </div>
 

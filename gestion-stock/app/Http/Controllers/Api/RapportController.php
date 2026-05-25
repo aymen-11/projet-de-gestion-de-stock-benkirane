@@ -16,14 +16,19 @@ class RapportController extends Controller
     {
         $mois = $request->mois ?? 6;
 
+        $driver = DB::connection()->getDriverName();
+        $dateFormat = $driver === 'sqlite' 
+            ? "strftime('%Y-%m', date_mouvement)" 
+            : "DATE_FORMAT(date_mouvement, '%Y-%m')";
+
         $mouvementsMensuels = Mouvement::select(
-                DB::raw("strftime('%Y-%m', date_mouvement) as mois"),
+                DB::raw("$dateFormat as mois"),
                 'type',
                 DB::raw('SUM(quantite) as total')
             )
             ->whereDate('date_mouvement', '>=', now()->subMonths($mois)->startOfMonth())
-            ->groupBy('mois', 'type')
-            ->orderBy('mois')
+            ->groupBy(DB::raw($dateFormat), 'type')
+            ->orderBy(DB::raw($dateFormat))
             ->get()
             ->groupBy('mois')
             ->map(fn($g, $m) => [
@@ -49,7 +54,7 @@ class RapportController extends Controller
             ->whereDate('date_mouvement', '>=', now()->subMonths(1))
             ->sum('quantite');
 
-        // Trigger alerts check (UCE02 - Générer alerte conditionnellement si seuil atteint par UC08)
+        // Trigger alerts check
         $criticalArticles = Article::where('actif', true)->whereColumn('stock_actuel', '<=', 'stock_min')->get();
         foreach ($criticalArticles as $art) {
             $msg = $art->stock_actuel <= 0 

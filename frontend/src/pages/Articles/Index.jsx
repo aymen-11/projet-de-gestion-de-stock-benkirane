@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, Filter, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Package, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import useAuthStore from '../../store/authStore';
 import api from '../../lib/axios';
+import ExportDropdown from '../../components/ExportDropdown';
 
 const StatusBadge = ({ status }) => {
   const styles = {
@@ -19,6 +23,12 @@ const StatusBadge = ({ status }) => {
   );
 };
 
+const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('data:') || path.startsWith('http://') || path.startsWith('https://')) return path;
+  return `http://127.0.0.1:8000${path}`;
+};
+
 export default function ArticlesList() {
   const { user } = useAuthStore();
   const canEdit = ['admin', 'responsable'].includes(user?.role);
@@ -29,15 +39,25 @@ export default function ArticlesList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
+
   const fetchArticles = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
       if (search) params.append('search', search);
       if (activeTab !== 'Tous') params.append('statut', activeTab);
+      params.append('page', currentPage);
+      params.append('per_page', 8);
       
       const response = await api.get(`/articles?${params.toString()}`);
       setArticles(response.data.data);
+      setCurrentPage(response.data.current_page);
+      setLastPage(response.data.last_page);
+      setTotal(response.data.total);
     } catch (err) {
       setError("Erreur lors du chargement des articles.");
     } finally {
@@ -47,7 +67,17 @@ export default function ArticlesList() {
 
   useEffect(() => {
     fetchArticles();
-  }, [activeTab, search]);
+  }, [activeTab, search, currentPage]);
+
+  const handleSearchChange = (val) => {
+    setSearch(val);
+    setCurrentPage(1);
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
 
   const handleDelete = async (id) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cet article ?")) {
@@ -60,28 +90,48 @@ export default function ArticlesList() {
     }
   };
 
-  const handleExportCSV = () => {
+  const handleExportExcel = () => {
     if (!articles.length) return alert('Aucun article à exporter');
-    const headers = ['Code', 'Designation', 'Categorie', 'Prix Unitaire', 'Stock Actuel', 'Stock Min', 'Statut'];
-    const rows = articles.map(a => [
-      a.code,
-      `"${a.designation}"`,
-      `"${a.categorie?.nom || 'Non catégorisé'}"`,
-      a.prix_unitaire,
-      a.stock_actuel,
-      a.stock_min,
-      a.statut_stock
-    ]);
-    const csvContent = "data:text/csv;charset=utf-8," 
-        + headers.join(",") + "\n" 
-        + rows.map(e => e.join(",")).join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `export_articles_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const data = articles.map(a => ({
+      'Code': a.code,
+      'Designation': a.designation,
+      'Categorie': a.categorie?.nom || 'Non catégorisé',
+      'Prix Unitaire (MAD)': Number(a.prix_unitaire).toFixed(2),
+      'Stock Actuel': a.stock_actuel,
+      'Stock Min': a.stock_min,
+      'Statut': a.statut_stock
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wscols = [
+      {wch: 15}, {wch: 35}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 15}, {wch: 15}
+    ];
+    ws['!cols'] = wscols;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Articles");
+    XLSX.writeFile(wb, `articles_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const handleExportPDF = () => {
+    if (!articles.length) return alert('Aucun article à exporter');
+    const doc = new jsPDF();
+    doc.text("Catalogue des Articles", 14, 15);
+    doc.autoTable({
+      startY: 20,
+      head: [['Code', 'Designation', 'Catégorie', 'Prix (MAD)', 'Stock', 'Statut']],
+      body: articles.map(a => [
+        a.code,
+        a.designation,
+        a.categorie?.nom || 'Non catégorisé',
+        Number(a.prix_unitaire).toFixed(2),
+        `${a.stock_actuel} / ${a.stock_min} min`,
+        a.statut_stock
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: [26, 118, 110] },
+    });
+    doc.save(`articles_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   return (
@@ -92,9 +142,7 @@ export default function ArticlesList() {
           <p className="text-sm text-gray-500 mt-1">Gérez votre inventaire et suivez l'état des stocks.</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-            <Download className="w-4 h-4" /> Exporter
-          </button>
+          <ExportDropdown onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} />
           {canEdit && (
             <Link to="/articles/create" className="px-4 py-2 bg-[#1A766E] text-white rounded-lg text-sm font-medium hover:bg-[#0A5C53] transition-colors shadow-sm flex items-center gap-2">
               <Plus className="w-4 h-4" /> Nouvel Article
@@ -110,7 +158,7 @@ export default function ArticlesList() {
             type="text" 
             placeholder="Rechercher par code, désignation..." 
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
           />
         </div>
@@ -120,7 +168,7 @@ export default function ArticlesList() {
              {['Tous', 'Normal', 'Attention', 'Critique', 'Rupture'].map((tab) => (
                <button 
                  key={tab}
-                 onClick={() => setActiveTab(tab)}
+                 onClick={() => handleTabChange(tab)}
                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
                    activeTab === tab 
                      ? 'bg-white shadow-sm text-gray-900 border border-gray-200/50' 
@@ -161,7 +209,7 @@ export default function ArticlesList() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
                           {article.image ? (
-                            <img src={article.image} alt="" className="w-full h-full object-cover rounded-xl" />
+                            <img src={getImageUrl(article.image)} alt="" className="w-full h-full object-cover rounded-xl" />
                           ) : (
                             <Package className="w-5 h-5 text-gray-400" />
                           )}
@@ -191,8 +239,8 @@ export default function ArticlesList() {
                     </td>
                     {canEdit && (
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Link to={`/articles/edit/${article.id}`} className="p-1.5 text-gray-400 hover:text-primary rounded-lg hover:bg-blue-50 transition-colors">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link to={`/articles/edit/${article.id}`} className="p-1.5 text-gray-400 hover:text-[#1A766E] rounded-lg hover:bg-teal-50 transition-colors">
                             <Edit2 className="w-4 h-4" />
                           </Link>
                           <button onClick={() => handleDelete(article.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors">
@@ -212,6 +260,31 @@ export default function ArticlesList() {
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+        
+        {/* Pagination Controls */}
+        {!loading && !error && lastPage > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-100">
+            <span className="text-sm text-gray-500">
+              Affichage de la page <span className="font-semibold text-gray-900">{currentPage}</span> sur <span className="font-semibold text-gray-900">{lastPage}</span> ({total} articles)
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              >
+                Précédent
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, lastPage))}
+                disabled={currentPage === lastPage}
+                className="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              >
+                Suivant
+              </button>
+            </div>
           </div>
         )}
       </div>

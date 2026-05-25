@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\MouvementController;
 use App\Http\Controllers\Api\AlerteController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\RapportController;
+use App\Http\Controllers\Api\UserController;
 
 // ── Public routes ──────────────────────────────────────────────────
 Route::post('/login', [AuthController::class, 'login']);
@@ -25,31 +26,63 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/profile',  [AuthController::class, 'updateProfile']);
     Route::put('/user/password', [AuthController::class, 'updatePassword']);
 
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index']);
+    // Dashboard - accessible by internal staff
+    Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('role:admin,responsable,magasinier,fournisseur');
 
     // Articles
-    Route::apiResource('articles', ArticleController::class);
+    Route::get('articles', [ArticleController::class, 'index']);
+    Route::get('articles/{article}', [ArticleController::class, 'show']);
+    Route::middleware('role:admin,responsable')->group(function () {
+        Route::post('articles', [ArticleController::class, 'store']);
+        Route::put('articles/{article}', [ArticleController::class, 'update']);
+        Route::delete('articles/{article}', [ArticleController::class, 'destroy']);
+    });
 
     // Categories
-    Route::apiResource('categories', CategorieController::class)->except(['show']);
+    Route::get('categories', [CategorieController::class, 'index']);
+    Route::middleware('role:admin,responsable')->group(function () {
+        Route::post('categories', [CategorieController::class, 'store']);
+        Route::put('categories/{categorie}', [CategorieController::class, 'update']);
+        Route::delete('categories/{categorie}', [CategorieController::class, 'destroy']);
+    });
 
     // Fournisseurs
-    Route::apiResource('fournisseurs', FournisseurController::class);
+    Route::middleware('role:admin,responsable')->group(function () {
+        Route::apiResource('fournisseurs', FournisseurController::class);
+    });
 
     // Commandes
-    Route::apiResource('commandes', CommandeController::class);
+    Route::middleware('role:admin,responsable,fournisseur')->group(function () {
+        Route::get('commandes', [CommandeController::class, 'index']);
+        Route::get('commandes/{commande}', [CommandeController::class, 'show']);
+        Route::put('commandes/{commande}', [CommandeController::class, 'update']);
+    });
+    Route::middleware('role:admin,responsable')->group(function () {
+        Route::post('commandes', [CommandeController::class, 'store']);
+        Route::delete('commandes/{commande}', [CommandeController::class, 'destroy']);
+    });
 
     // Mouvements
-    Route::get('/mouvements', [MouvementController::class, 'index']);
-    Route::post('/mouvements', [MouvementController::class, 'store']);
+    Route::middleware('role:admin,responsable,magasinier')->group(function () {
+        Route::get('/mouvements', [MouvementController::class, 'index']);
+        Route::post('/mouvements', [MouvementController::class, 'store']);
+    });
 
     // Alertes
-    Route::get('/alertes', [AlerteController::class, 'index']);
-    Route::get('/alertes/counts', [AlerteController::class, 'counts']);
-    Route::put('/alertes/{alerte}/marquer-lue', [AlerteController::class, 'marquerLue']);
-    Route::put('/alertes/marquer-toutes-lues', [AlerteController::class, 'marquerToutesLues']);
+    Route::middleware('role:admin,responsable,magasinier')->group(function () {
+        Route::get('/alertes', [AlerteController::class, 'index']);
+        Route::get('/alertes/counts', [AlerteController::class, 'counts']);
+        Route::put('/alertes/{alerte}/marquer-lue', [AlerteController::class, 'marquerLue']);
+        Route::put('/alertes/marquer-toutes-lues', [AlerteController::class, 'marquerToutesLues']);
+    });
 
     // Rapports
-    Route::get('/rapports', [RapportController::class, 'index']);
+    Route::middleware('role:admin,responsable')->group(function () {
+        Route::get('/rapports', [RapportController::class, 'index']);
+    });
+
+    // Utilisateurs
+    Route::middleware('role:admin')->group(function () {
+        Route::apiResource('users', UserController::class);
+    });
 });

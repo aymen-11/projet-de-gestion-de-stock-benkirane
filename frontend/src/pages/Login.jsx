@@ -202,23 +202,29 @@ export default function Login() {
                 </button>
               </form>
 
-              {/* Social Divider */}
-              <div className="relative flex items-center justify-center mt-6 mb-5">
+              {/* Quick Login (Dev) */}
+              <div className="relative flex items-center justify-center mt-6 mb-4">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-100"></div>
                 </div>
-                <div className="relative bg-white px-3 text-[10px] font-medium text-gray-400">
-                  Or continue with
+                <div className="relative bg-white px-3 text-[10px] font-bold text-[#1A766E] uppercase tracking-wider">
+                  Accès Rapide (Tests)
                 </div>
               </div>
 
-              {/* Social Icons */}
-              <div className="flex items-center justify-center gap-3">
-                {[GoogleIcon, AppleIcon, FacebookIcon, XIcon].map((Icon, i) => (
-                  <button key={i} type="button" className="w-9 h-9 flex items-center justify-center bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-                    <div className="scale-[0.8]"><Icon /></div>
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => { setEmail('admin@stock.ma'); setPassword('password'); setIsLogin(true); }} className="py-1.5 bg-purple-50 text-purple-700 text-[11px] font-bold rounded-lg border border-purple-100 hover:bg-purple-100 transition-colors">
+                  Administrateur
+                </button>
+                <button type="button" onClick={() => { setEmail('responsable@stock.ma'); setPassword('password'); setIsLogin(true); }} className="py-1.5 bg-blue-50 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors">
+                  Responsable
+                </button>
+                <button type="button" onClick={() => { setEmail('magasinier@stock.ma'); setPassword('password'); setIsLogin(true); }} className="py-1.5 bg-amber-50 text-amber-700 text-[11px] font-bold rounded-lg border border-amber-100 hover:bg-amber-100 transition-colors">
+                  Magasinier
+                </button>
+                <button type="button" onClick={() => { setEmail('fournisseur@stock.ma'); setPassword('password'); setIsLogin(true); }} className="py-1.5 bg-gray-50 text-gray-700 text-[11px] font-bold rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                  Fournisseur
+                </button>
               </div>
             </div>
           </div>

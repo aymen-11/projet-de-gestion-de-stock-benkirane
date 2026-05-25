@@ -15,7 +15,7 @@ const QUICK_LINKS = [
   { label: 'Commandes',    path: '/commandes',   icon: ShoppingCart,desc: 'Gestion des commandes' },
   { label: 'Fournisseurs', path: '/fournisseurs',icon: Truck,       desc: 'Liste des fournisseurs' },
   { label: 'Rapports',     path: '/rapports',    icon: FileText,    desc: 'Rapports & analyses' },
-  { label: 'Paramètres',   path: '/parametres',  icon: Settings,    desc: 'Configuration du système' },
+  { label: 'Mon Profil',   path: '/parametres',  icon: Settings,    desc: 'Configuration de mon compte' },
 ];
 
 function SearchPalette({ onClose }) {
@@ -150,7 +150,7 @@ const allSecondaryNavItems = [
   { path: '/sorties',     label: 'Stock Out',    roles: ['admin', 'responsable', 'magasinier'], icon: ArrowUpFromLine },
   { path: '/historique',  label: 'History',      roles: ['admin', 'responsable', 'magasinier'], icon: History },
   { path: '/rapports',    label: 'Reports',      roles: ['admin', 'responsable'],               icon: BarChart3 },
-  { path: '/parametres',  label: 'Settings',     roles: ['admin'],                              icon: Settings },
+  { path: '/parametres',  label: 'Mon Profil',   roles: ['admin', 'responsable', 'magasinier', 'fournisseur'], icon: Settings },
   { path: '/utilisateurs',label: 'Users',        roles: ['admin'],                              icon: Users },
   { path: '/journaux',    label: 'Audit Logs',   roles: ['admin'],                              icon: Activity },
 ];
@@ -170,6 +170,8 @@ export default function AppLayout() {
   const secondaryNavItems = allSecondaryNavItems.filter(item => item.roles.includes(userRole));
 
   useEffect(() => {
+    if (userRole === 'fournisseur') return;
+    
     const fetchAlertCount = async () => {
       try {
         const res = await api.get('/alertes/counts');
@@ -179,7 +181,7 @@ export default function AppLayout() {
     fetchAlertCount();
     const interval = setInterval(fetchAlertCount, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [userRole]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -295,15 +297,17 @@ export default function AppLayout() {
           </button>
           
           {/* Notifications */}
-          <NavLink
-            to="/alertes"
-            className="relative w-10 h-10 flex items-center justify-center text-gray-500 hover:text-[#1A766E] hover:bg-white rounded-full transition-colors"
-          >
-            <Bell className="w-5 h-5" />
-            {alertCount > 0 && (
-              <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-[#F3F4F6]"></span>
-            )}
-          </NavLink>
+          {userRole !== 'fournisseur' && (
+            <NavLink
+              to="/alertes"
+              className="relative w-10 h-10 flex items-center justify-center text-gray-500 hover:text-[#1A766E] hover:bg-white rounded-full transition-colors"
+            >
+              <Bell className="w-5 h-5" />
+              {alertCount > 0 && (
+                <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-[#F3F4F6]"></span>
+              )}
+            </NavLink>
+          )}
 
           {/* User Profile / Logout */}
           <div className="relative group">

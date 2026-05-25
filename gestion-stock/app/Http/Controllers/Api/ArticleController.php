@@ -45,7 +45,16 @@ class ArticleController extends Controller
             'unite'         => 'required|string',
             'fournisseur_ids' => 'nullable|array',
             'fournisseur_ids.*' => 'exists:fournisseurs,id',
+            'image'         => 'nullable|string',
         ]);
+
+        if ($request->image && preg_match('/^data:image\/(\w+);base64,/', $request->image, $type)) {
+            $imageDecoded = base64_decode(substr($request->image, strpos($request->image, ',') + 1));
+            $type = strtolower($type[1]);
+            $fileName = 'article_' . time() . '_' . uniqid() . '.' . $type;
+            \Storage::disk('public')->put('articles/' . $fileName, $imageDecoded);
+            $data['image'] = '/storage/articles/' . $fileName;
+        }
 
         $article = Article::create($data);
 
@@ -77,7 +86,16 @@ class ArticleController extends Controller
             'actif'         => 'boolean',
             'fournisseur_ids' => 'nullable|array',
             'fournisseur_ids.*' => 'exists:fournisseurs,id',
+            'image'         => 'nullable|string',
         ]);
+
+        if ($request->image && preg_match('/^data:image\/(\w+);base64,/', $request->image, $type)) {
+            $imageDecoded = base64_decode(substr($request->image, strpos($request->image, ',') + 1));
+            $type = strtolower($type[1]);
+            $fileName = 'article_' . time() . '_' . uniqid() . '.' . $type;
+            \Storage::disk('public')->put('articles/' . $fileName, $imageDecoded);
+            $data['image'] = '/storage/articles/' . $fileName;
+        }
 
         $article->update($data);
 

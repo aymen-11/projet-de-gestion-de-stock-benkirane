@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Lightbulb, ArrowUpRight, X, BarChart3, Package, AlertTriangle, ShoppingCart, GripVertical } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../lib/axios';
+import useAuthStore from '../store/authStore';
 
 const BAR_COLORS = ['#1A766E', '#0A5C53', '#0A3D39', '#6B7280', '#9CA3AF'];
 
@@ -357,7 +358,14 @@ function WidgetCard({ id, span, children, label, route, hideHeader,
 }
 
 // ── Add Widget Drawer ────────────────────────────────────────────
-function WidgetDrawer({ activeWidgets, onToggle, onClose }) {
+function WidgetDrawer({ activeWidgets, onToggle, onClose, userRole }) {
+  const getAllowedWidgets = () => {
+    if (userRole === 'magasinier') return ['movements', 'critical', 'mini_mvts'];
+    if (userRole === 'fournisseur') return ['mini_orders', 'categories'];
+    return Object.keys(WIDGET_META); // admin & responsable get all
+  };
+  const allowed = getAllowedWidgets();
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
       <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]"/>
@@ -373,7 +381,9 @@ function WidgetDrawer({ activeWidgets, onToggle, onClose }) {
         </div>
         <p className="text-xs text-gray-400 font-medium px-6 pt-4 pb-2">Choisissez les widgets à afficher</p>
         <div className="flex-1 px-4 pb-6 space-y-2">
-          {Object.entries(WIDGET_META).map(([id, meta]) => {
+          {Object.entries(WIDGET_META)
+            .filter(([id]) => allowed.includes(id))
+            .map(([id, meta]) => {
             const Icon   = meta.icon;
             const active = activeWidgets.includes(id);
             return (
@@ -406,13 +416,20 @@ function WidgetDrawer({ activeWidgets, onToggle, onClose }) {
 
 // ── Main Dashboard ────────────────────────────────────────────────
 export default function Dashboard() {
+  const { user } = useAuthStore();
   const [data, setData]             = useState(null);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState(null);
   const [showDrawer, setShowDrawer] = useState(false);
-  const [widgetOrder, setWidgetOrder] = useState(DEFAULT_ORDER);
   const [dragIdx, setDragIdx]       = useState(null);
   const [dragOverIdx, setDragOverIdx] = useState(null);
+
+  const getInitialOrder = () => {
+    if (user?.role === 'magasinier') return ['movements', 'critical', 'mini_mvts'];
+    if (user?.role === 'fournisseur') return ['mini_orders', 'categories'];
+    return DEFAULT_ORDER;
+  };
+  const [widgetOrder, setWidgetOrder] = useState(getInitialOrder);
 
   useEffect(() => {
     api.get('/dashboard')
@@ -471,6 +488,7 @@ export default function Dashboard() {
           activeWidgets={widgetOrder}
           onToggle={toggleWidget}
           onClose={() => setShowDrawer(false)}
+          userRole={user?.role}
         />
       )}
 

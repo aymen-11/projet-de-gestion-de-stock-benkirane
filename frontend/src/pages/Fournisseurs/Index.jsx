@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Filter, LayoutGrid, List, MoreVertical, Edit2, Trash2, Mail, Phone, MapPin, Building, Star } from 'lucide-react';
+import { Search, Plus, Filter, LayoutGrid, List, MoreVertical, Edit2, Trash2, Mail, Phone, MapPin, Building, Star, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../../lib/axios';
 
@@ -41,6 +41,27 @@ export default function FournisseursList() {
     fetchFournisseurs();
   }, [search]);
 
+  const handleExportCSV = () => {
+    if (!fournisseurs.length) return alert('Aucun fournisseur à exporter');
+    const headers = ['Nom', 'Email', 'Téléphone', 'Ville', 'Pays', 'Statut', 'Articles Liés'];
+    const rows = fournisseurs.map(f => [
+      `"${f.nom}"`,
+      `"${f.email || ''}"`,
+      `"${f.telephone || ''}"`,
+      `"${f.ville || ''}"`,
+      `"${f.pays || ''}"`,
+      f.statut,
+      f.articles_count || 0
+    ]);
+    const csv = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(r => r.join(",")).join("\n");
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csv));
+    link.setAttribute("download", `fournisseurs_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleDelete = async (id) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer ce fournisseur ?")) {
       try {
@@ -61,8 +82,8 @@ export default function FournisseursList() {
           <p className="text-sm text-gray-500 mt-1">Gérez vos partenaires commerciaux et contacts.</p>
         </div>
         <div className="flex gap-3">
-          <button className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-            Exporter
+          <button onClick={handleExportCSV} className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2">
+            <Download className="w-4 h-4" /> Exporter CSV
           </button>
           <Link to="/fournisseurs/create" className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm shadow-primary/30 flex items-center gap-2">
             <Plus className="w-4 h-4" /> Nouveau Fournisseur
@@ -120,9 +141,12 @@ export default function FournisseursList() {
                     </div>
                     <div className="flex items-center gap-2">
                       <StatusBadge status={fournisseur.statut} />
-                      <div className="relative opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-1 text-gray-400 hover:text-gray-600 rounded">
-                          <MoreVertical className="w-4 h-4" />
+                      <div className="flex items-center gap-1">
+                        <Link to={`/fournisseurs/edit/${fournisseur.id}`} className="p-1.5 text-gray-400 hover:text-[#1A766E] rounded-lg hover:bg-[#1A766E]/10 transition-colors">
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Link>
+                        <button onClick={() => handleDelete(fournisseur.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors">
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -214,7 +238,7 @@ export default function FournisseursList() {
                           <StatusBadge status={fournisseur.statut} />
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-end gap-2">
                             <Link to={`/fournisseurs/edit/${fournisseur.id}`} className="p-1.5 text-gray-400 hover:text-primary rounded-lg hover:bg-blue-50 transition-colors">
                               <Edit2 className="w-4 h-4" />
                             </Link>

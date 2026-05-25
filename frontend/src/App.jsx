@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import useAuthStore from './store/authStore';
 import AppLayout from './components/layout/AppLayout';
+import RoleRoute from './components/layout/RoleRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ArticlesList from './pages/Articles/Index';
@@ -32,29 +33,30 @@ function App() {
         
         <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="dashboard" element={<RoleRoute roles={['admin', 'responsable', 'magasinier', 'fournisseur']}><Dashboard /></RoleRoute>} />
           
-          <Route path="articles" element={<ArticlesList />} />
-          <Route path="articles/create" element={<ArticleForm />} />
-          <Route path="articles/edit/:id" element={<ArticleForm isEdit={true} />} />
+          <Route path="articles" element={<RoleRoute roles={['admin', 'responsable', 'magasinier', 'fournisseur']}><ArticlesList /></RoleRoute>} />
+          <Route path="articles/create" element={<RoleRoute roles={['admin', 'responsable']}><ArticleForm /></RoleRoute>} />
+          <Route path="articles/edit/:id" element={<RoleRoute roles={['admin', 'responsable']}><ArticleForm isEdit={true} /></RoleRoute>} />
           
-          <Route path="entrees" element={<EntreeForm />} />
-          <Route path="sorties" element={<SortieForm />} />
-          <Route path="mouvements" element={<MouvementsList />} />
+          <Route path="entrees" element={<RoleRoute roles={['admin', 'responsable', 'magasinier']}><EntreeForm /></RoleRoute>} />
+          <Route path="sorties" element={<RoleRoute roles={['admin', 'responsable', 'magasinier']}><SortieForm /></RoleRoute>} />
+          <Route path="mouvements" element={<RoleRoute roles={['admin', 'responsable', 'magasinier']}><MouvementsList /></RoleRoute>} />
+          <Route path="historique" element={<RoleRoute roles={['admin', 'responsable', 'magasinier']}><MouvementsList /></RoleRoute>} />
           
-          <Route path="fournisseurs" element={<FournisseursList />} />
-          <Route path="fournisseurs/create" element={<FournisseurForm />} />
-          <Route path="fournisseurs/edit/:id" element={<FournisseurForm isEdit={true} />} />
+          <Route path="fournisseurs" element={<RoleRoute roles={['admin', 'responsable']}><FournisseursList /></RoleRoute>} />
+          <Route path="fournisseurs/create" element={<RoleRoute roles={['admin', 'responsable']}><FournisseurForm /></RoleRoute>} />
+          <Route path="fournisseurs/edit/:id" element={<RoleRoute roles={['admin', 'responsable']}><FournisseurForm isEdit={true} /></RoleRoute>} />
           
-          <Route path="commandes" element={<CommandesList />} />
-          <Route path="commandes/create" element={<CommandeForm />} />
-          <Route path="commandes/edit/:id" element={<CommandeForm isEdit={true} />} />
+          <Route path="commandes" element={<RoleRoute roles={['admin', 'responsable', 'fournisseur']}><CommandesList /></RoleRoute>} />
+          <Route path="commandes/create" element={<RoleRoute roles={['admin', 'responsable']}><CommandeForm /></RoleRoute>} />
+          <Route path="commandes/edit/:id" element={<RoleRoute roles={['admin', 'responsable', 'fournisseur']}><CommandeForm isEdit={true} /></RoleRoute>} />
           
-          <Route path="alertes" element={<AlertesList />} />
-          <Route path="rapports" element={<Rapports />} />
-          <Route path="parametres" element={<Parametres />} />
-          <Route path="utilisateurs" element={<UtilisateursList />} />
-          <Route path="journaux" element={<JournauxList />} />
+          <Route path="alertes" element={<RoleRoute roles={['admin', 'responsable', 'magasinier']}><AlertesList /></RoleRoute>} />
+          <Route path="rapports" element={<RoleRoute roles={['admin', 'responsable']}><Rapports /></RoleRoute>} />
+          <Route path="parametres" element={<RoleRoute roles={['admin', 'responsable', 'magasinier', 'fournisseur']}><Parametres /></RoleRoute>} />
+          <Route path="utilisateurs" element={<RoleRoute roles={['admin']}><UtilisateursList /></RoleRoute>} />
+          <Route path="journaux" element={<RoleRoute roles={['admin']}><JournauxList /></RoleRoute>} />
         </Route>
       </Routes>
     </BrowserRouter>
