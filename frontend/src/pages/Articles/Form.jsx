@@ -23,6 +23,7 @@ export default function ArticleForm({ isEdit = false }) {
   const [unite, setUnite] = useState("pcs");
   const [description, setDescription] = useState("");
   const [prixUnitaire, setPrixUnitaire] = useState("");
+  const [stockActuel, setStockActuel] = useState("0");
   const [stockMin, setStockMin] = useState("10");
   const [stockMax, setStockMax] = useState("");
   const [selectedFournisseurs, setSelectedFournisseurs] = useState([]);
@@ -68,6 +69,7 @@ export default function ArticleForm({ isEdit = false }) {
           setUnite(article.unite || "pcs");
           setDescription(article.description || "");
           setPrixUnitaire(article.prix_unitaire);
+          setStockActuel(article.stock_actuel || "0");
           setStockMin(article.stock_min);
           setStockMax(article.stock_max || "");
           setSelectedFournisseurs(article.fournisseurs || []);
@@ -102,6 +104,7 @@ export default function ArticleForm({ isEdit = false }) {
         unite,
         description,
         prix_unitaire: parseFloat(prixUnitaire),
+        stock_actuel: parseInt(stockActuel),
         stock_min: parseInt(stockMin),
         stock_max: stockMax ? parseInt(stockMax) : null,
         fournisseur_ids: selectedFournisseurs.map(f => f.id),
@@ -274,14 +277,25 @@ export default function ArticleForm({ isEdit = false }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Stock Actuel</label>
+                  <input 
+                    type="number" 
+                    value={stockActuel}
+                    onChange={(e) => setStockActuel(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1A766E]/20 focus:border-[#1A766E] transition-all" 
+                    placeholder="0" 
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Défaut: 0 (Rupture)</p>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Stock Minimum *</label>
                   <input 
                     type="number" 
                     value={stockMin}
                     onChange={(e) => setStockMin(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" 
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1A766E]/20 focus:border-[#1A766E] transition-all" 
                     placeholder="0" 
                     required 
                   />
@@ -293,9 +307,10 @@ export default function ArticleForm({ isEdit = false }) {
                     type="number" 
                     value={stockMax}
                     onChange={(e) => setStockMax(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" 
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1A766E]/20 focus:border-[#1A766E] transition-all" 
                     placeholder="0" 
                   />
+                  <p className="text-xs text-gray-500 mt-1">Limite max</p>
                 </div>
               </div>
 

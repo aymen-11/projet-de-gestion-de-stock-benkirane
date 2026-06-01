@@ -42,7 +42,7 @@ class ArticleController extends Controller
             'description'   => 'nullable|string',
             'categorie_id'  => 'nullable|exists:categories,id',
             'prix_unitaire' => 'required|numeric|min:0',
-            'stock_actuel'  => 'integer|min:0',
+            'stock_actuel'  => 'nullable|integer|min:0',
             'stock_min'     => 'required|integer|min:0',
             'stock_max'     => 'nullable|integer|min:0',
             'unite'         => 'required|string',
@@ -59,6 +59,7 @@ class ArticleController extends Controller
             $data['image'] = '/storage/articles/' . $fileName;
         }
 
+        $data['stock_actuel'] = $data['stock_actuel'] ?? 0;
         $article = Article::create($data);
 
         if (!empty($data['fournisseur_ids'])) {
@@ -83,6 +84,7 @@ class ArticleController extends Controller
             'description'   => 'nullable|string',
             'categorie_id'  => 'nullable|exists:categories,id',
             'prix_unitaire' => 'required|numeric|min:0',
+            'stock_actuel'  => 'nullable|integer|min:0',
             'stock_min'     => 'required|integer|min:0',
             'stock_max'     => 'nullable|integer|min:0',
             'unite'         => 'required|string',
