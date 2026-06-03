@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, ArrowUpRight, ArrowDownRight, Download, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import api from '../../lib/axios';
 import ExportDropdown from '../../components/ExportDropdown';
 
@@ -95,7 +95,7 @@ export default function MouvementsList() {
     if (!filtered.length) return alert('Aucun mouvement à exporter');
     const doc = new jsPDF('landscape');
     doc.text("Historique des Mouvements", 14, 15);
-    doc.autoTable({
+    autoTable(doc, {
       startY: 20,
       head: [['Date', 'Article', 'Type', 'Quantité', 'Stock (Av → Ap)', 'Motif', 'Opérateur']],
       body: filtered.map(m => [

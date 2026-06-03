@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Plus, Filter, Search, ArrowUpDown, Clock, CheckCircle, Send, AlertCircle, XCircle, Eye, Edit2, MessageSquare, Download } from 'lucide-react';
+import { Plus, Filter, Search, ArrowUpDown, Clock, CheckCircle, Send, AlertCircle, XCircle, Eye, Edit2, MessageSquare, Download, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import useAuthStore from '../../store/authStore';
 import api from '../../lib/axios';
 import ExportDropdown from '../../components/ExportDropdown';
@@ -89,7 +89,7 @@ export default function CommandesList() {
     if (!commandes.length) return alert('Aucune commande à exporter');
     const doc = new jsPDF();
     doc.text("Liste des Commandes", 14, 15);
-    doc.autoTable({
+    autoTable(doc, {
       startY: 20,
       head: [['Référence', 'Fournisseur', 'Date', 'Livraison', 'Total (MAD)', 'Statut']],
       body: commandes.map(c => [
@@ -221,7 +221,7 @@ export default function CommandesList() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Link to={`/commandes/edit/${commande.id}`} className="p-1.5 text-gray-400 hover:text-[#1A766E] rounded-lg hover:bg-[#1A766E]/10 transition-colors" title="Voir">
+                        <Link to={`/commandes/${commande.id}`} className="p-1.5 text-gray-400 hover:text-[#1A766E] rounded-lg hover:bg-[#1A766E]/10 transition-colors" title="Voir les détails et prix">
                           <Eye className="w-4 h-4" />
                         </Link>
                         {isFournisseur ? (
@@ -230,9 +230,16 @@ export default function CommandesList() {
                             Répondre
                           </button>
                         ) : (
-                          <Link to={`/commandes/edit/${commande.id}`} className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors" title="Modifier">
-                            <Edit2 className="w-4 h-4" />
-                          </Link>
+                          <>
+                            <button onClick={() => openReplyModal(commande)} className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-amber-600 hover:bg-amber-50 rounded-lg transition-colors border border-amber-200" title="Changer le statut">
+                              <RefreshCw className="w-3.5 h-3.5" /> Statut
+                            </button>
+                            {!['En attente', 'Reçu', 'Annulé'].includes(commande.statut) && (
+                              <Link to={`/commandes/edit/${commande.id}`} className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors" title="Modifier">
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </Link>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
@@ -252,7 +259,7 @@ export default function CommandesList() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
             <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="font-bold text-gray-900">Répondre à la commande</h3>
+              <h3 className="font-bold text-gray-900">{isFournisseur ? 'Répondre à la commande' : 'Mettre à jour le statut'}</h3>
               <button onClick={() => setReplyModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <XCircle className="w-5 h-5" />
               </button>
@@ -265,9 +272,17 @@ export default function CommandesList() {
                   onChange={(e) => setReplyStatus(e.target.value)}
                   className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1A766E]/20 focus:border-[#1A766E]"
                 >
-                  <option value="En attente">En attente (Confirmation de réception)</option>
-                  <option value="Envoyé">Envoyé (En cours d'expédition)</option>
-                  <option value="Annulé">Annulé (Impossible à traiter)</option>
+                  {isFournisseur ? (
+                    <option value="En attente">En attente (Confirmation de réception)</option>
+                  ) : (
+                    <>
+                      <option value="Brouillon">Brouillon</option>
+                      <option value="Envoyé">Envoyé (Vers le fournisseur)</option>
+                      <option value="En attente">En attente (Par le fournisseur)</option>
+                      <option value="Reçu">Reçu (Marchandise livrée)</option>
+                      <option value="Annulé">Annulé</option>
+                    </>
+                  )}
                 </select>
               </div>
               <div>

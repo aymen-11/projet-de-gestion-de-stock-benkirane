@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Filter, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Package, Download } from 'lucide-react';
+import { Search, Plus, Filter, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Package, Download, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import useAuthStore from '../../store/authStore';
 import api from '../../lib/axios';
 import ExportDropdown from '../../components/ExportDropdown';
@@ -117,7 +117,7 @@ export default function ArticlesList() {
     if (!articles.length) return alert('Aucun article à exporter');
     const doc = new jsPDF();
     doc.text("Catalogue des Articles", 14, 15);
-    doc.autoTable({
+    autoTable(doc, {
       startY: 20,
       head: [['Code', 'Designation', 'Catégorie', 'Prix (MAD)', 'Stock', 'Statut']],
       body: articles.map(a => [
@@ -197,7 +197,35 @@ export default function ArticlesList() {
                   <th className="px-6 py-4">Catégorie</th>
                   <th className="px-6 py-4 text-right">Prix Unitaire</th>
                   <th className="px-6 py-4 text-center">Stock</th>
-                  <th className="px-6 py-4 text-center">Statut</th>
+                  <th className="px-6 py-4 text-center group relative cursor-help">
+                    <div className="flex items-center justify-center gap-1.5">
+                      Statut
+                      <Info className="w-4 h-4 text-gray-400 group-hover:text-[#1A766E] transition-colors" />
+                    </div>
+                    {/* Tooltip Légende */}
+                    <div className="absolute top-full right-0 mt-2 w-[280px] bg-gray-900 text-white text-left text-xs rounded-xl shadow-xl p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] normal-case font-normal">
+                      <div className="font-semibold mb-2 border-b border-gray-700 pb-1.5 uppercase tracking-wider text-[10px] text-gray-300">Légende des statuts</div>
+                      <ul className="space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="w-2 h-2 rounded-full bg-red-500 mt-1 shrink-0"></span>
+                          <span><b className="text-red-400">Rupture :</b> Le stock actuel est à <b className="text-white">0</b>.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="w-2 h-2 rounded-full bg-orange-500 mt-1 shrink-0"></span>
+                          <span><b className="text-orange-400">Critique :</b> Le stock est inférieur ou égal au stock <b className="text-white">Min</b>.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="w-2 h-2 rounded-full bg-amber-400 mt-1 shrink-0"></span>
+                          <span><b className="text-amber-400">Attention :</b> Le stock est au-dessus du Min, mais dans la marge de sécurité (<b className="text-white">+20%</b>).</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="w-2 h-2 rounded-full bg-green-500 mt-1 shrink-0"></span>
+                          <span><b className="text-green-400">Normal :</b> Le stock est largement suffisant (&gt; Min + 20%).</span>
+                        </li>
+                      </ul>
+                      <div className="absolute bottom-full right-6 -mb-1 border-4 border-transparent border-b-gray-900"></div>
+                    </div>
+                  </th>
                   {canEdit && <th className="px-6 py-4 text-right">Actions</th>}
                 </tr>
               </thead>
@@ -228,10 +256,34 @@ export default function ArticlesList() {
                     <td className="px-6 py-4 text-right font-medium text-gray-900">
                       {Number(article.prix_unitaire).toFixed(2)} MAD
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex flex-col items-center">
-                        <span className="font-bold text-lg text-gray-900">{article.stock_actuel}</span>
-                        <span className="text-xs text-gray-400">/ {article.stock_min} min</span>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col w-full min-w-[140px]">
+                        <div className="flex justify-between items-end mb-1">
+                          <span className="font-bold text-lg text-gray-900 leading-none">{article.stock_actuel}</span>
+                          <div className="text-[10px] text-gray-500 font-medium text-right leading-tight">
+                            <div>Min: {article.stock_min}</div>
+                            {article.stock_max && <div>Max: {article.stock_max}</div>}
+                          </div>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden flex relative">
+                          <div 
+                            className={`h-full rounded-full transition-all ${
+                              article.stock_actuel <= 0 ? 'bg-red-500' :
+                              article.stock_actuel <= article.stock_min ? 'bg-orange-500' :
+                              article.stock_actuel <= article.stock_min * 1.2 ? 'bg-amber-400' : 'bg-[#1A766E]'
+                            }`}
+                            style={{ width: `${Math.min(100, Math.max(0, (article.stock_actuel / (article.stock_max || Math.max(article.stock_actuel, article.stock_min * 2) || 100)) * 100))}%` }}
+                          />
+                          {/* Min marker */}
+                          <div 
+                            className="absolute top-0 bottom-0 w-0.5 bg-red-400/50 z-10" 
+                            style={{ left: `${Math.min(100, (article.stock_min / (article.stock_max || Math.max(article.stock_actuel, article.stock_min * 2) || 100)) * 100)}%` }}
+                            title={`Minimum: ${article.stock_min}`}
+                          />
+                        </div>
+                        <div className="text-[10px] text-gray-400 mt-1 text-center font-medium">
+                          {Math.round(Math.min(100, Math.max(0, (article.stock_actuel / (article.stock_max || Math.max(article.stock_actuel, article.stock_min * 2) || 100)) * 100)))}% de capacité
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">

@@ -17,7 +17,10 @@ const useAuthStore = create((set) => ({
       set({ user, token, loading: false });
       return true;
     } catch (err) {
-      const message = err.response?.data?.message || 'Erreur de connexion.';
+      const message =
+        err.response?.data?.errors?.email?.[0] ||
+        err.response?.data?.message ||
+        'Erreur de connexion.';
       set({ loading: false, error: message });
       return false;
     }
@@ -33,7 +36,11 @@ const useAuthStore = create((set) => ({
       set({ user, token, loading: false });
       return true;
     } catch (err) {
-      const message = err.response?.data?.message || "Erreur d'inscription.";
+      const message =
+        err.response?.data?.errors?.email?.[0] ||
+        err.response?.data?.errors?.password?.[0] ||
+        err.response?.data?.message ||
+        "Erreur d'inscription.";
       set({ loading: false, error: message });
       return false;
     }

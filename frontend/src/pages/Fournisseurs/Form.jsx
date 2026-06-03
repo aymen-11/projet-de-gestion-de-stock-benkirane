@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, X, Building, Mail, Phone, MapPin, CheckCircle } from 'lucide-react';
+import { Save, X, Building, Mail, Phone, MapPin, CheckCircle, Star } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../../lib/axios';
 
@@ -24,6 +24,7 @@ export default function FournisseurForm({ isEdit = false }) {
   const [adresse, setAdresse] = useState('');
   const [ville, setVille] = useState('');
   const [pays, setPays] = useState('Maroc');
+  const [rating, setRating] = useState(0);
   const [notes, setNotes] = useState('');
 
   // Fetch existing fournisseur if editing
@@ -40,6 +41,7 @@ export default function FournisseurForm({ isEdit = false }) {
           setAdresse(fournisseur.adresse || '');
           setVille(fournisseur.ville || '');
           setPays(fournisseur.pays || 'Maroc');
+          setRating(fournisseur.rating || 0);
           setNotes(fournisseur.notes || '');
         } catch (err) {
           setError("Erreur lors du chargement du fournisseur.");
@@ -64,6 +66,7 @@ export default function FournisseurForm({ isEdit = false }) {
         adresse,
         ville,
         pays,
+        rating,
         notes
       };
 
@@ -214,6 +217,25 @@ export default function FournisseurForm({ isEdit = false }) {
           </div>
 
           <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Évaluation du fournisseur</label>
+            <div className="flex items-center gap-2 mb-4">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  className="p-1 focus:outline-none transition-transform hover:scale-110"
+                >
+                  <Star 
+                    className={`w-6 h-6 ${star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`} 
+                  />
+                </button>
+              ))}
+              <span className="text-sm text-gray-500 ml-2">
+                {rating === 0 ? '(Non évalué)' : `${rating} étoile${rating > 1 ? 's' : ''}`}
+              </span>
+            </div>
+            
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes ou Remarques</label>
             <textarea 
               rows="3" 

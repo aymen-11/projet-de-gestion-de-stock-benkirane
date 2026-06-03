@@ -33,9 +33,9 @@ class MouvementController extends Controller
             'type'               => 'required|in:entree,sortie',
             'quantite'           => 'required|integer|min:1',
             'motif'              => 'required|string',
-            'reference_document' => 'required_if:type,entree|nullable|string',
-            'fournisseur_id'     => 'required_if:type,entree|nullable|exists:fournisseurs,id',
-            'destinataire'       => 'required_if:type,sortie|nullable|string',
+            'reference_document' => 'nullable|string',
+            'fournisseur_id'     => 'nullable|exists:fournisseurs,id',
+            'destinataire'       => 'nullable|string',
             'date_mouvement'     => 'required|date',
             'notes'              => 'nullable|string',
         ]);

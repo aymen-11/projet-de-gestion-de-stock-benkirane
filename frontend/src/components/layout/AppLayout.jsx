@@ -140,7 +140,6 @@ function SearchPalette({ onClose }) {
 const allPrimaryNavItems = [
   { path: '/dashboard',   label: 'Home',         roles: ['admin', 'responsable', 'magasinier', 'fournisseur'] },
   { path: '/articles',    label: 'Articles',     roles: ['admin', 'responsable', 'magasinier', 'fournisseur'] },
-  { path: '/mouvements',  label: 'Movements',    roles: ['admin', 'responsable', 'magasinier'] },
   { path: '/commandes',   label: 'Orders',       roles: ['admin', 'responsable', 'fournisseur'] },
   { path: '/fournisseurs',label: 'Suppliers',    roles: ['admin', 'responsable'] },
 ];
@@ -149,7 +148,6 @@ const allSecondaryNavItems = [
   { path: '/entrees',     label: 'Stock In',     roles: ['admin', 'responsable', 'magasinier'], icon: ArrowDownToLine },
   { path: '/sorties',     label: 'Stock Out',    roles: ['admin', 'responsable', 'magasinier'], icon: ArrowUpFromLine },
   { path: '/historique',  label: 'History',      roles: ['admin', 'responsable', 'magasinier'], icon: History },
-  { path: '/rapports',    label: 'Reports',      roles: ['admin', 'responsable'],               icon: BarChart3 },
   { path: '/parametres',  label: 'Mon Profil',   roles: ['admin', 'responsable', 'magasinier', 'fournisseur'], icon: Settings },
   { path: '/utilisateurs',label: 'Users',        roles: ['admin'],                              icon: Users },
   { path: '/journaux',    label: 'Audit Logs',   roles: ['admin'],                              icon: Activity },

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Save, User, Building, Bell, Shield, Key, Check, Loader } from 'lucide-react';
+import { Save, User, Building, Bell, Shield, Key, Check, Loader, AlertCircle, ShoppingCart, ArrowUpDown, FileText } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import api from '../../lib/axios';
 
@@ -92,7 +92,7 @@ export default function Parametres() {
     { id: 'profil',        label: 'Mon Profil',      icon: User   },
     { id: 'notifications', label: 'Notifications',   icon: Bell   },
     { id: 'securite',      label: 'Sécurité',        icon: Shield },
-    { id: 'entreprise',    label: 'Entreprise',      icon: Building },
+    ...(user?.role !== 'fournisseur' ? [{ id: 'entreprise', label: 'Entreprise', icon: Building }] : []),
   ];
 
   const inputCls = "w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:border-[#1A766E] transition-all";
@@ -178,19 +178,24 @@ export default function Parametres() {
 
               <div className="space-y-4">
                 {[
-                  { key: 'stock_critique',       label: 'Stock critique',        desc: 'Alertes quand un article atteint le seuil minimum' },
-                  { key: 'nouvelles_commandes',   label: 'Nouvelles commandes',   desc: 'Notification à chaque nouvelle commande créée' },
-                  { key: 'mouvements',            label: 'Mouvements de stock',   desc: 'Entrées et sorties de stock en temps réel' },
-                  { key: 'rapports',              label: 'Rapports hebdomadaires',desc: 'Résumé automatique chaque lundi matin' },
-                ].map(({ key, label, desc }) => (
-                  <div key={key} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{label}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                  { key: 'stock_critique',       label: 'Stock critique',        desc: 'Alertes quand un article atteint le seuil minimum', icon: AlertCircle },
+                  { key: 'nouvelles_commandes',   label: 'Nouvelles commandes',   desc: 'Notification à chaque nouvelle commande créée', icon: ShoppingCart },
+                  { key: 'mouvements',            label: 'Mouvements de stock',   desc: 'Entrées et sorties de stock en temps réel', icon: ArrowUpDown },
+                  { key: 'rapports',              label: 'Rapports hebdomadaires',desc: 'Résumé automatique chaque lundi matin', icon: FileText },
+                ].map(({ key, label, desc, icon: Icon }) => (
+                  <div key={key} className="flex items-center justify-between p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${notifs[key] ? 'bg-[#1A766E]/10 text-[#1A766E]' : 'bg-gray-100 text-gray-400'}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">{label}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+                      </div>
                     </div>
                     <button
                       onClick={() => setNotifs(n => ({ ...n, [key]: !n[key] }))}
-                      className={`w-12 h-6 rounded-full relative transition-colors duration-200 ${notifs[key] ? 'bg-[#1A766E]' : 'bg-gray-200'}`}
+                      className={`w-12 h-6 rounded-full relative transition-colors duration-200 focus:outline-none ${notifs[key] ? 'bg-[#1A766E]' : 'bg-gray-200'}`}
                     >
                       <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${notifs[key] ? 'left-6' : 'left-0.5'}`}/>
                     </button>

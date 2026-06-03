@@ -95,21 +95,43 @@ class CommandeController extends Controller
             'date_commande'         => 'date',
             'date_livraison_prevue' => 'nullable|date',
             'notes'                 => 'nullable|string',
+            'lignes'                => 'nullable|array|min:1',
+            'lignes.*.article_id'   => 'required_with:lignes|exists:articles,id',
+            'lignes.*.quantite'     => 'required_with:lignes|integer|min:1',
+            'lignes.*.prix_unitaire'=> 'required_with:lignes|numeric|min:0',
         ]);
 
-        $commande->update($data);
+        return DB::transaction(function () use ($data, $request, $commande) {
+            $commande->update(collect($data)->except('lignes')->toArray());
 
-        if ($request->user()->role === 'fournisseur' && (isset($data['notes']) || isset($data['statut']))) {
-            $admins = User::whereIn('role', ['admin', 'responsable'])->get();
-            Notification::send($admins, new FournisseurReplyNotification(
-                $commande->id,
-                $commande->reference ?? 'N/A',
-                $request->user()->name,
-                $data['notes'] ?? 'Statut mis à jour : ' . $data['statut']
-            ));
-        }
+            if (isset($data['lignes'])) {
+                $commande->lignes()->delete();
+                $total = 0;
+                foreach ($data['lignes'] as $ligne) {
+                    $lineTotal = $ligne['quantite'] * $ligne['prix_unitaire'];
+                    $total += $lineTotal;
+                    LigneCommande::create([
+                        'commande_id'   => $commande->id,
+                        'article_id'    => $ligne['article_id'],
+                        'quantite'      => $ligne['quantite'],
+                        'prix_unitaire' => $ligne['prix_unitaire'],
+                    ]);
+                }
+                $commande->update(['total' => $total]);
+            }
 
-        return response()->json($commande->load('fournisseur', 'lignes.article'));
+            if ($request->user()->role === 'fournisseur' && (isset($data['notes']) || isset($data['statut']))) {
+                $admins = User::whereIn('role', ['admin', 'responsable'])->get();
+                Notification::send($admins, new FournisseurReplyNotification(
+                    $commande->id,
+                    $commande->reference ?? 'N/A',
+                    $request->user()->name,
+                    $data['notes'] ?? 'Statut mis à jour : ' . $data['statut']
+                ));
+            }
+
+            return response()->json($commande->load('fournisseur', 'lignes.article'));
+        });
     }
 
     public function destroy(Commande $commande)

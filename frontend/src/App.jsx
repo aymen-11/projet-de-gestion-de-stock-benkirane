@@ -13,8 +13,10 @@ import SortieForm from './pages/Mouvements/SortieForm';
 import MouvementsList from './pages/Mouvements/Index';
 import FournisseursList from './pages/Fournisseurs/Index';
 import FournisseurForm from './pages/Fournisseurs/Form';
+import FournisseurShow from './pages/Fournisseurs/Show';
 import CommandesList from './pages/Commandes/Index';
 import CommandeForm from './pages/Commandes/Form';
+import CommandeShow from './pages/Commandes/Show';
 import Parametres from './pages/Parametres/Index';
 import UtilisateursList from './pages/Utilisateurs/Index';
 import JournauxList from './pages/Journaux/Index';
@@ -46,11 +48,13 @@ function App() {
           
           <Route path="fournisseurs" element={<RoleRoute roles={['admin', 'responsable']}><FournisseursList /></RoleRoute>} />
           <Route path="fournisseurs/create" element={<RoleRoute roles={['admin', 'responsable']}><FournisseurForm /></RoleRoute>} />
+          <Route path="fournisseurs/:id" element={<RoleRoute roles={['admin', 'responsable']}><FournisseurShow /></RoleRoute>} />
           <Route path="fournisseurs/edit/:id" element={<RoleRoute roles={['admin', 'responsable']}><FournisseurForm isEdit={true} /></RoleRoute>} />
           
           <Route path="commandes" element={<RoleRoute roles={['admin', 'responsable', 'fournisseur']}><CommandesList /></RoleRoute>} />
           <Route path="commandes/create" element={<RoleRoute roles={['admin', 'responsable']}><CommandeForm /></RoleRoute>} />
-          <Route path="commandes/edit/:id" element={<RoleRoute roles={['admin', 'responsable', 'fournisseur']}><CommandeForm isEdit={true} /></RoleRoute>} />
+          <Route path="commandes/:id" element={<RoleRoute roles={['admin', 'responsable', 'fournisseur']}><CommandeShow /></RoleRoute>} />
+          <Route path="commandes/edit/:id" element={<RoleRoute roles={['admin', 'responsable']}><CommandeForm isEdit={true} /></RoleRoute>} />
           
           <Route path="alertes" element={<RoleRoute roles={['admin', 'responsable', 'magasinier', 'fournisseur']}><AlertesList /></RoleRoute>} />
           <Route path="rapports" element={<RoleRoute roles={['admin', 'responsable']}><Rapports /></RoleRoute>} />

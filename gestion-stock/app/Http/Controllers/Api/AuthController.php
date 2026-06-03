@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use App\Models\User;
 
@@ -18,13 +19,22 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        // For API (stateless) authentication we validate credentials manually
+        // instead of relying on session-based Auth::attempt(). This ensures
+        // JSON requests from SPAs/mobile clients authenticate correctly.
+        Log::info('Login attempt received', ['payload' => $request->only('email','password')]);
+        $user = User::where('email', $request->email)->first();
+        Log::info('Login lookup', ['user_email' => $user?->email, 'user_hash_present' => (bool) $user?->password]);
+
+        $check = $user ? Hash::check($request->password, $user->password) : false;
+        Log::info('Password check result', ['email' => $request->email, 'check' => $check]);
+
+        if (!$user || !$check) {
             throw ValidationException::withMessages([
                 'email' => ['Les identifiants fournis sont incorrects.'],
             ]);
         }
 
-        $user  = $request->user();
         $token = $user->createToken('stockpro-token')->plainTextToken;
 
         return response()->json([

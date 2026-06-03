@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Filter, LayoutGrid, List, MoreVertical, Edit2, Trash2, Mail, Phone, MapPin, Building, Star, Download } from 'lucide-react';
+import { Search, Plus, LayoutGrid, List, Edit2, Trash2, Eye, Mail, Phone, MapPin, Building, Star, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import api from '../../lib/axios';
+import ExportDropdown from '../../components/ExportDropdown';
 
 const StatusBadge = ({ status }) => {
   const isActif = status === 'Actif';
@@ -41,25 +45,44 @@ export default function FournisseursList() {
     fetchFournisseurs();
   }, [search]);
 
-  const handleExportCSV = () => {
+  const handleExportExcel = () => {
     if (!fournisseurs.length) return alert('Aucun fournisseur à exporter');
-    const headers = ['Nom', 'Email', 'Téléphone', 'Ville', 'Pays', 'Statut', 'Articles Liés'];
-    const rows = fournisseurs.map(f => [
-      `"${f.nom}"`,
-      `"${f.email || ''}"`,
-      `"${f.telephone || ''}"`,
-      `"${f.ville || ''}"`,
-      `"${f.pays || ''}"`,
-      f.statut,
-      f.articles_count || 0
-    ]);
-    const csv = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(r => r.join(",")).join("\n");
-    const link = document.createElement("a");
-    link.setAttribute("href", encodeURI(csv));
-    link.setAttribute("download", `fournisseurs_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const data = fournisseurs.map(f => ({
+      'Nom': f.nom,
+      'Email': f.email || '',
+      'Téléphone': f.telephone || '',
+      'Ville': f.ville || '',
+      'Pays': f.pays || '',
+      'Statut': f.statut,
+      'Évaluation': f.rating ? `${f.rating}/5` : 'Non évalué',
+      'Articles Liés': f.articles_count || 0
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws['!cols'] = [{wch:25},{wch:25},{wch:18},{wch:15},{wch:12},{wch:10},{wch:12},{wch:12}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Fournisseurs');
+    XLSX.writeFile(wb, `fournisseurs_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const handleExportPDF = () => {
+    if (!fournisseurs.length) return alert('Aucun fournisseur à exporter');
+    const doc = new jsPDF();
+    doc.text('Liste des Fournisseurs', 14, 15);
+    autoTable(doc, {
+      startY: 20,
+      head: [['Nom', 'Email', 'Téléphone', 'Ville', 'Statut', 'Évaluation']],
+      body: fournisseurs.map(f => [
+        f.nom,
+        f.email || '',
+        f.telephone || '',
+        f.ville || '',
+        f.statut,
+        f.rating ? `${f.rating}/5` : '—'
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: [26, 118, 110] },
+    });
+    doc.save(`fournisseurs_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const handleDelete = async (id) => {
@@ -82,10 +105,8 @@ export default function FournisseursList() {
           <p className="text-sm text-gray-500 mt-1">Gérez vos partenaires commerciaux et contacts.</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={handleExportCSV} className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2">
-            <Download className="w-4 h-4" /> Exporter CSV
-          </button>
-          <Link to="/fournisseurs/create" className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm shadow-primary/30 flex items-center gap-2">
+          <ExportDropdown onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} />
+          <Link to="/fournisseurs/create" className="px-4 py-2 bg-[#1A766E] text-white rounded-lg text-sm font-medium hover:bg-[#0A5C53] transition-colors shadow-sm flex items-center gap-2">
             <Plus className="w-4 h-4" /> Nouveau Fournisseur
           </Link>
         </div>
@@ -119,9 +140,6 @@ export default function FournisseursList() {
               <List className="w-4 h-4" />
             </button>
           </div>
-          <button className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-100 transition-colors">
-            <Filter className="w-4 h-4" /> Filtrer
-          </button>
         </div>
       </div>
 
@@ -142,10 +160,13 @@ export default function FournisseursList() {
                     <div className="flex items-center gap-2">
                       <StatusBadge status={fournisseur.statut} />
                       <div className="flex items-center gap-1">
-                        <Link to={`/fournisseurs/edit/${fournisseur.id}`} className="p-1.5 text-gray-400 hover:text-[#1A766E] rounded-lg hover:bg-[#1A766E]/10 transition-colors">
+                        <Link to={`/fournisseurs/${fournisseur.id}`} className="p-1.5 text-gray-400 hover:text-[#1A766E] rounded-lg hover:bg-[#1A766E]/10 transition-colors" title="Voir les détails">
+                          <Eye className="w-3.5 h-3.5" />
+                        </Link>
+                        <Link to={`/fournisseurs/edit/${fournisseur.id}`} className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors" title="Modifier">
                           <Edit2 className="w-3.5 h-3.5" />
                         </Link>
-                        <button onClick={() => handleDelete(fournisseur.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors">
+                        <button onClick={() => handleDelete(fournisseur.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors" title="Supprimer">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -238,11 +259,14 @@ export default function FournisseursList() {
                           <StatusBadge status={fournisseur.statut} />
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Link to={`/fournisseurs/edit/${fournisseur.id}`} className="p-1.5 text-gray-400 hover:text-primary rounded-lg hover:bg-blue-50 transition-colors">
+                          <div className="flex items-center justify-end gap-1">
+                            <Link to={`/fournisseurs/${fournisseur.id}`} className="p-1.5 text-gray-400 hover:text-[#1A766E] rounded-lg hover:bg-[#1A766E]/10 transition-colors" title="Voir les détails">
+                              <Eye className="w-4 h-4" />
+                            </Link>
+                            <Link to={`/fournisseurs/edit/${fournisseur.id}`} className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors" title="Modifier">
                               <Edit2 className="w-4 h-4" />
                             </Link>
-                            <button onClick={() => handleDelete(fournisseur.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors">
+                            <button onClick={() => handleDelete(fournisseur.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors" title="Supprimer">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
