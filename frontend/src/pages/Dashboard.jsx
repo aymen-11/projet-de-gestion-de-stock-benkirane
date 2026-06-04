@@ -326,8 +326,7 @@ function WidgetCard({ id, span, children, label, route, hideHeader,
             >
               <GripVertical className="w-4 h-4"/>
             </div>
-            <button onMouseDown={e => e.stopPropagation()}
-              className="text-gray-300 hover:text-gray-400 text-lg font-bold leading-none">···</button>
+
           </div>
         </div>
       )}

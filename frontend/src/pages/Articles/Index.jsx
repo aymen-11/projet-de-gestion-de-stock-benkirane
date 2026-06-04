@@ -32,7 +32,7 @@ const getImageUrl = (path) => {
 export default function ArticlesList() {
   const { user } = useAuthStore();
   const canEdit = ['admin', 'responsable'].includes(user?.role);
-  
+
   const [activeTab, setActiveTab] = useState('Tous');
   const [search, setSearch] = useState('');
   const [articles, setArticles] = useState([]);
@@ -52,7 +52,7 @@ export default function ArticlesList() {
       if (activeTab !== 'Tous') params.append('statut', activeTab);
       params.append('page', currentPage);
       params.append('per_page', 8);
-      
+
       const response = await api.get(`/articles?${params.toString()}`);
       setArticles(response.data.data);
       setCurrentPage(response.data.current_page);
@@ -104,7 +104,7 @@ export default function ArticlesList() {
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wscols = [
-      {wch: 15}, {wch: 35}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 15}, {wch: 15}
+      { wch: 15 }, { wch: 35 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }
     ];
     ws['!cols'] = wscols;
 
@@ -154,30 +154,29 @@ export default function ArticlesList() {
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:max-w-md group">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Rechercher par code, désignation..." 
+          <input
+            type="text"
+            placeholder="Rechercher par code, désignation..."
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
           />
         </div>
-        
+
         <div className="flex gap-4 w-full md:w-auto">
           <div className="flex bg-gray-50 border border-gray-200 rounded-xl p-1">
-             {['Tous', 'Normal', 'Attention', 'Critique', 'Rupture'].map((tab) => (
-               <button 
-                 key={tab}
-                 onClick={() => handleTabChange(tab)}
-                 className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                   activeTab === tab 
-                     ? 'bg-white shadow-sm text-gray-900 border border-gray-200/50' 
-                     : 'text-gray-500 hover:text-gray-700'
-                 }`}
-               >
-                 {tab}
-               </button>
-             ))}
+            {['Tous', 'Normal', 'Attention', 'Critique', 'Rupture'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => handleTabChange(tab)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === tab
+                    ? 'bg-white shadow-sm text-gray-900 border border-gray-200/50'
+                    : 'text-gray-500 hover:text-gray-700'
+                  }`}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -266,17 +265,16 @@ export default function ArticlesList() {
                           </div>
                         </div>
                         <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden flex relative">
-                          <div 
-                            className={`h-full rounded-full transition-all ${
-                              article.stock_actuel <= 0 ? 'bg-red-500' :
-                              article.stock_actuel <= article.stock_min ? 'bg-orange-500' :
-                              article.stock_actuel <= article.stock_min * 1.2 ? 'bg-amber-400' : 'bg-[#1A766E]'
-                            }`}
+                          <div
+                            className={`h-full rounded-full transition-all ${article.stock_actuel <= 0 ? 'bg-red-500' :
+                                article.stock_actuel <= article.stock_min ? 'bg-orange-500' :
+                                  article.stock_actuel <= article.stock_min * 1.2 ? 'bg-amber-400' : 'bg-[#1A766E]'
+                              }`}
                             style={{ width: `${Math.min(100, Math.max(0, (article.stock_actuel / (article.stock_max || Math.max(article.stock_actuel, article.stock_min * 2) || 100)) * 100))}%` }}
                           />
                           {/* Min marker */}
-                          <div 
-                            className="absolute top-0 bottom-0 w-0.5 bg-red-400/50 z-10" 
+                          <div
+                            className="absolute top-0 bottom-0 w-0.5 bg-red-400/50 z-10"
                             style={{ left: `${Math.min(100, (article.stock_min / (article.stock_max || Math.max(article.stock_actuel, article.stock_min * 2) || 100)) * 100)}%` }}
                             title={`Minimum: ${article.stock_min}`}
                           />
@@ -314,7 +312,7 @@ export default function ArticlesList() {
             </table>
           </div>
         )}
-        
+
         {/* Pagination Controls */}
         {!loading && !error && lastPage > 1 && (
           <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-100">
